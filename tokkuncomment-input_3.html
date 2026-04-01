@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>特訓コメント入力ツール</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&display=swap');
+  
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  :root {
+    --navy: #1e3a5f;
+    --navy-light: #2a4d7a;
+    --bg: #f5f6f8;
+    --card: #ffffff;
+    --border: #dfe3e8;
+    --text: #1a1a1a;
+    --text-sub: #5f6b7a;
+    --accent: #2d7ff9;
+    --green: #34a853;
+    --green-bg: #e6f4ea;
+    --field-bg: #fafbfc;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  
+  body {
+    font-family: 'Noto Sans JP', 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+  
+  /* Header */
+  .header {
+    background: var(--navy);
+    color: #fff;
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+  
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  .header h1 {
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+  
+  .header-badge {
+    background: rgba(255,255,255,0.15);
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+  }
+  
+  .header-actions {
+    display: flex;
+    gap: 8px;
+  }
+  
+  .btn-header {
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  
+  .btn-header:hover {
+    background: rgba(255,255,255,0.22);
+  }
+  
+  .btn-header.primary {
+    background: #fff;
+    color: var(--navy);
+    border-color: #fff;
+    font-weight: 600;
+  }
+  
+  .btn-header.primary:hover {
+    background: #e8ecf0;
+  }
+  
+  /* Main layout */
+  .main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px;
+  }
+  
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  
+  .grid .full-width {
+    grid-column: 1 / -1;
+  }
+  
+  .grid .left-col {
+    grid-column: 1;
+  }
+  
+  .grid .right-col {
+    grid-column: 2;
+  }
+  
+  /* Field card */
+  .field-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: var(--shadow);
+    transition: border-color 0.2s;
+  }
+  
+  .field-card:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(45, 127, 249, 0.1);
+  }
+  
+  .field-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  
+  .field-label-text {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  
+  .field-label-icon {
+    font-size: 14px;
+  }
+  
+  .field-char-count {
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--text-sub);
+    font-weight: 400;
+  }
+  
+  .field-textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--text);
+    background: var(--field-bg);
+    resize: vertical;
+    transition: border-color 0.15s;
+  }
+  
+  .field-textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: #fff;
+  }
+  
+  .field-textarea::placeholder {
+    color: #b0b8c4;
+  }
+  
+  .field-textarea.tall {
+    min-height: 160px;
+  }
+  
+  /* Toast notification */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--navy);
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    transition: transform 0.3s ease;
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .toast.show {
+    transform: translateX(-50%) translateY(0);
+  }
+  
+  .toast.success {
+    background: var(--green);
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .grid {
+      grid-template-columns: 1fr;
+    }
+    .grid .left-col,
+    .grid .right-col {
+      grid-column: 1;
+    }
+    .header {
+      flex-direction: column;
+      gap: 12px;
+      align-items: stretch;
+    }
+    .header-actions {
+      justify-content: flex-end;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <span style="font-size:20px">📝</span>
+    <h1>特訓コメント入力ツール</h1>
+    <span class="header-badge">指導簿用</span>
+  </div>
+  <div class="header-actions">
+    <button class="btn-header" onclick="loadTestData()">🧪 サンプルデータ</button>
+    <button class="btn-header" onclick="manualSave()">💾 保存</button>
+    <button class="btn-header" onclick="clearAll()">🗑️ クリア</button>
+    <button class="btn-header primary" onclick="copyToClipboard()">📋 クリップボードにコピー</button>
+  </div>
+</div>
+
+<div class="main">
+  <!-- hidden container for Chrome extension to read -->
+  <div id="tokkuncomment-data" data-values="{}"></div>
+  
+  <div class="grid">
+    <!-- Left column -->
+    <div class="field-card left-col">
+      <div class="field-label">
+        <span class="field-label-icon">📖</span>
+        <span class="field-label-text">今回の特訓内容</span>
+        <span class="field-char-count" data-for="content">0文字</span>
+      </div>
+      <textarea class="field-textarea tall" name="content" 
+        placeholder="確認テストの内容、指導した範囲など"></textarea>
+    </div>
+    
+    <div class="field-card right-col">
+      <div class="field-label">
+        <span class="field-label-icon">⚠️</span>
+        <span class="field-label-text">もっとよくできる点・課題</span>
+        <span class="field-char-count" data-for="instructorAdvice">0文字</span>
+      </div>
+      <textarea class="field-textarea tall" name="instructorAdvice"
+        placeholder="テストの結果や学習姿勢の課題など"></textarea>
+    </div>
+    
+    <div class="field-card left-col">
+      <div class="field-label">
+        <span class="field-label-icon">📌</span>
+        <span class="field-label-text">備考</span>
+        <span class="field-char-count" data-for="instructorComment3">0文字</span>
+      </div>
+      <textarea class="field-textarea" name="instructorComment3"
+        placeholder="段階突破の予定、特記事項など"></textarea>
+    </div>
+    
+    <div class="field-card right-col">
+      <div class="field-label">
+        <span class="field-label-icon">🔍</span>
+        <span class="field-label-text">原因</span>
+        <span class="field-char-count" data-for="cause">0文字</span>
+      </div>
+      <textarea class="field-textarea" name="cause"
+        placeholder="課題が生じた原因の分析"></textarea>
+    </div>
+    
+    <div class="field-card left-col">
+      <div class="field-label">
+        <span class="field-label-icon">💬</span>
+        <span class="field-label-text">講師コメント</span>
+        <span class="field-char-count" data-for="instructorComment1">0文字</span>
+      </div>
+      <textarea class="field-textarea tall" name="instructorComment1"
+        placeholder="生徒への激励、評価コメントなど&#10;※生徒には表示されません"></textarea>
+    </div>
+    
+    <div class="field-card right-col">
+      <div class="field-label">
+        <span class="field-label-icon">🎯</span>
+        <span class="field-label-text">解決策・目標</span>
+        <span class="field-char-count" data-for="instructorComment2">0文字</span>
+      </div>
+      <textarea class="field-textarea tall" name="instructorComment2"
+        placeholder="具体的な改善方法、練習の指示など"></textarea>
+    </div>
+    
+    <div class="field-card full-width">
+      <div class="field-label">
+        <span class="field-label-icon">🏁</span>
+        <span class="field-label-text">次回までの目標</span>
+        <span class="field-char-count" data-for="nextTimeGoals">0文字</span>
+      </div>
+      <textarea class="field-textarea" name="nextTimeGoals"
+        placeholder="次回の特訓までに達成すべき具体的な目標"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const FIELDS = [
+    'content', 'instructorAdvice', 'instructorComment3',
+    'cause', 'instructorComment1', 'instructorComment2', 'nextTimeGoals'
+  ];
+  
+  const FIELD_LABELS = {
+    content:             '今回の特訓内容',
+    instructorAdvice:    'もっとよくできる点・課題',
+    instructorComment3:  '備考',
+    cause:               '原因',
+    instructorComment1:  '講師コメント',
+    instructorComment2:  '解決策・目標',
+    nextTimeGoals:       '次回までの目標'
+  };
+  
+  const STORAGE_KEY = 'tokkuncomment_draft';
+  let isDirty = false;
+  
+  const dataContainer = document.getElementById('tokkuncomment-data');
+  
+  // ── データ更新 ──
+  
+  function updateData() {
+    const data = {};
+    FIELDS.forEach(name => {
+      const el = document.querySelector(`textarea[name="${name}"]`);
+      if (el) {
+        data[name] = el.value;
+        const counter = document.querySelector(`.field-char-count[data-for="${name}"]`);
+        if (counter) {
+          counter.textContent = `${el.value.length}文字`;
+        }
+      }
+    });
+    dataContainer.dataset.values = JSON.stringify(data);
+  }
+  
+  // ── 保存（localStorage） ──
+  
+  function saveToStorage() {
+    const data = {};
+    FIELDS.forEach(name => {
+      const el = document.querySelector(`textarea[name="${name}"]`);
+      if (el) data[name] = el.value;
+    });
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    isDirty = false;
+  }
+  
+  function manualSave() {
+    saveToStorage();
+    showToast('✓ 保存しました', true);
+  }
+  
+  function restoreFromStorage() {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        const data = JSON.parse(saved);
+        FIELDS.forEach(name => {
+          const el = document.querySelector(`textarea[name="${name}"]`);
+          if (el && data[name]) el.value = data[name];
+        });
+        updateData();
+      } catch (e) {}
+    }
+  }
+  
+  // 30秒ごとに自動保存（変更がある場合のみ）
+  setInterval(() => {
+    if (isDirty) {
+      saveToStorage();
+      showToast('自動保存しました');
+    }
+  }, 30000);
+  
+  // ── クリア ──
+  
+  function clearAll() {
+    if (!confirm('すべてのフィールドをクリアしますか？')) return;
+    FIELDS.forEach(name => {
+      const el = document.querySelector(`textarea[name="${name}"]`);
+      if (el) el.value = '';
+    });
+    updateData();
+    saveToStorage();
+    showToast('クリアしました');
+  }
+  
+  // ── クリップボードにコピー（:::fieldName::: 形式） ──
+  
+  function copyToClipboard() {
+    const lines = [];
+    FIELDS.forEach(name => {
+      const el = document.querySelector(`textarea[name="${name}"]`);
+      lines.push(`:::${name}:::`);
+      lines.push(el ? el.value : '');
+    });
+    
+    const hasContent = FIELDS.some(name => {
+      const el = document.querySelector(`textarea[name="${name}"]`);
+      return el && el.value.trim();
+    });
+    
+    if (!hasContent) {
+      showToast('入力されたフィールドがありません');
+      return;
+    }
+    
+    navigator.clipboard.writeText(lines.join('\n')).then(() => {
+      showToast('✓ クリップボードにコピーしました', true);
+    }).catch(() => {
+      showToast('コピーに失敗しました');
+    });
+  }
+  
+  // ── テストデータ入力 ──
+  
+  function loadTestData() {
+    const testData = {
+      content: '確認テストのチェック（システム英単語 1201-1400）\n長文読解の演習（やっておきたい英語長文300 第15回）\n英文法の復習（Next Stage 第12章 仮定法）',
+      instructorAdvice: 'システム英単語の確認テスト\n1201-1300の範囲で3問ミスがあった\n特に多義語の2番目以降の意味が定着していない\n長文読解\n設問の根拠となる箇所を本文中に見つけるのに時間がかかりすぎている',
+      instructorComment3: '【共通テストに向けて】\nリーディングの時間配分を意識した演習を来週から開始予定\nまずは大問1〜3を15分以内に解く練習から',
+      cause: '【単語について】\n単語カードを作っているが、1つの意味しか書いていないため多義語に対応できていない\n【長文について】\nパラグラフごとの要旨を把握せずに、設問を見てから本文を探しに行く読み方になっている\n→ 結果的に何度も本文を読み返すことになり時間をロスしている',
+      instructorComment1: '【Good】\n仮定法の理解がとても正確です！\nifの省略や混合仮定法のような応用問題も自力で解けていました。\n文法は着実に力がついています。\n【今後に期待】\n単語の暗記法を少し変えるだけで、確認テストの得点はすぐ上がると思います。\n長文も「読み方」を身につければ一気に伸びるタイプです。',
+      instructorComment2: '【単語の覚え方を改善】\n単語カードに多義語の場合は2つ目の意味も追加する\n特にシス単の★★マークの多義語は優先的に対応\n毎日の復習で「日本語→英語」だけでなく「英語→日本語（全部の意味）」も確認\n【長文の読み方トレーニング】\nまずパラグラフを読み終えたら1文で要旨をメモする習慣をつける\n設問を見る前に本文全体の流れを把握してから解答に入る',
+      nextTimeGoals: 'システム英単語1201-1400の確認テストで満点を取る（多義語も含めて）\nやっておきたい英語長文300 第16回を25分以内に解き終える'
+    };
+    
+    FIELDS.forEach(name => {
+      const el = document.querySelector(`textarea[name="${name}"]`);
+      if (el) el.value = testData[name] || '';
+    });
+    
+    updateData();
+    isDirty = true;
+    showToast('サンプルデータを入力しました');
+  }
+  
+  // ── Toast ──
+  
+  function showToast(msg, success = false) {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.className = 'toast show' + (success ? ' success' : '');
+    setTimeout(() => { toast.className = 'toast'; }, 2500);
+  }
+  
+  // ── イベントリスナー ──
+  
+  FIELDS.forEach(name => {
+    const el = document.querySelector(`textarea[name="${name}"]`);
+    if (el) {
+      el.addEventListener('input', () => {
+        updateData();
+        isDirty = true;
+      });
+    }
+  });
+  
+  // ページを離れる前に未保存データがあれば保存
+  window.addEventListener('beforeunload', () => {
+    if (isDirty) saveToStorage();
+  });
+  
+  // ── 初期化 ──
+  restoreFromStorage();
+  updateData();
+
+  // onclick属性から呼べるようにグローバルに公開
+  window.clearAll = clearAll;
+  window.copyToClipboard = copyToClipboard;
+  window.loadTestData = loadTestData;
+  window.manualSave = manualSave;
+</script>
+</body>
+</html>
